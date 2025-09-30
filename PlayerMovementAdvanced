@@ -1,0 +1,153 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class PlayerMovement : MonoBehaviour
+{
+    // Fyzikální tělo hráče
+    public Rigidbody2D rb;
+    // Rychlost pohybu do stran
+    public int speed = 3;
+    // Síla skoku (výška)
+    public int jumpHeight = 5;
+    // Typ hráče – "Fire" nebo "Water"
+    public string playerType;
+
+    // Komponenta pro otáčení sprite
+    public SpriteRenderer spriteRenderer;
+    // Komponenta pro animace (Idle, Running, Jump atd.)
+    public Animator animator;
+
+    // Objekt pod hráčem pro kontrolu dotyku se zemí
+    public Transform groundCheck;
+    // Vrstva určující, co je zem
+    public LayerMask groundLayer;
+
+    // --- Coyote time (malá tolerance pro skok po opuštění plošiny) ---
+    public float coyoteTime = 0.1f;   // čas v sekundách
+    private float coyoteTimeCounter;  // odpočet
+
+    void Update()
+    {
+        // Pokud je hráč na zemi, resetuj časovač coyote time
+        if (IsGrounded())
+        {
+            coyoteTimeCounter = coyoteTime;
+        }
+        else
+        {
+            // Pokud není na zemi, čas se odpočítává
+            coyoteTimeCounter -= Time.deltaTime;
+        }
+
+        // Rozdělení ovládání podle typu hráče
+        if (playerType == "Fire")
+        {
+            FireMovement();
+        }
+        else
+        {
+            WaterMovement();
+        }
+    }
+
+    // Pohyb pro vodního hráče – ovládání pomocí WASD
+    public void WaterMovement()
+    {
+        float move = 0;
+
+        // Pohyb doleva (A)
+        if (Input.GetKey(KeyCode.A))
+        {
+            move = -speed;
+            spriteRenderer.flipX = true; // otočení sprite doleva
+        }
+        // Pohyb doprava (D)
+        if (Input.GetKey(KeyCode.D))
+        {
+            move = speed;
+            spriteRenderer.flipX = false; // otočení sprite doprava
+        }
+
+        // Aplikace horizontální rychlosti
+        rb.linearVelocity = new Vector2(move, rb.linearVelocity.y);
+
+        // Animace běhu
+        if (move != 0)
+        {
+            animator.SetBool("Running", true);
+        }
+        else
+        {
+            animator.SetBool("Running", false);
+        }
+
+        // Skok (W) – povolený i při coyote time
+        if (Input.GetKeyDown(KeyCode.W) && coyoteTimeCounter > 0f)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpHeight);
+            coyoteTimeCounter = 0f; // reset, aby se nedalo skočit víckrát
+        }
+    }
+
+    // Pohyb pro ohnivého hráče – ovládání pomocí šipek
+    public void FireMovement()
+    {
+        float move = 0;
+
+        // Pohyb doleva (←)
+        if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            move = -speed;
+            spriteRenderer.flipX = true;
+        }
+        // Pohyb doprava (→)
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            move = speed;
+            spriteRenderer.flipX = false;
+        }
+
+        // Aplikace horizontální rychlosti
+        rb.linearVelocity = new Vector2(move, rb.linearVelocity.y);
+
+        // Animace běhu
+        if (move != 0)
+        {
+            animator.SetBool("Running", true); // Nastavení booleanu Running v animatoru na true
+        }
+        else
+        {
+            animator.SetBool("Running", false); // Nastavení booleanu Running v animatoru na false
+        }
+
+        // Skok (↑) – povolený i při coyote time
+        if (Input.GetKeyDown(KeyCode.UpArrow) && coyoteTimeCounter > 0f)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpHeight);
+            coyoteTimeCounter = 0f;
+        }
+    }
+
+    // Kontrola, zda je hráč na zemi
+    private bool IsGrounded()
+    {
+        // Vytvoří malý kruh pod hráčem a hledá kolizi se zemí
+        return Physics2D.OverlapCircle(groundCheck.position, 0.01f, groundLayer);
+    }
+
+    // Reakce na kolizi s objekty
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        // Pokud vodní hráč narazí na ohnivý objekt → restart scény
+        if (collision.gameObject.tag == "Fire" && playerType == "Water")
+        {
+            SceneManager.LoadScene("SampleScene");
+        }
+
+        // Pokud ohnivý hráč narazí na vodní objekt → restart scény
+        if (collision.gameObject.tag == "Water" && playerType == "Fire")
+        {
+            SceneManager.LoadScene("SampleScene");
+        }
+    }
+}
