@@ -1,0 +1,13 @@
+using UnityEngine;
+
+public class Egg : MonoBehaviour
+{
+    public string eggType;
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.tag == eggType)
+        {
+            Destroy(gameObject);
+        }
+    }
+}
