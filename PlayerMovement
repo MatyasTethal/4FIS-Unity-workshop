@@ -1,0 +1,91 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class PlayerMovement : MonoBehaviour
+{
+    public Rigidbody2D rb;
+    public int speed = 3;
+    public int jumpHeight = 5;
+    public string playerType;
+
+    public SpriteRenderer spriteRenderer;
+
+    public Transform groundCheck;
+    public LayerMask groundLayer;
+
+    void Update()
+    {
+        if (playerType == "Fire")
+        {
+            FireMovement();
+        }
+        else
+        {
+            WaterMovement();
+        }
+    }
+
+    public void WaterMovement()
+    {
+        float move = 0;
+
+        if (Input.GetKey(KeyCode.A))
+        {
+            move = -speed;
+            spriteRenderer.flipX = true;
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            move = speed;
+            spriteRenderer.flipX = false;
+        }
+
+        rb.linearVelocity = new Vector2(move, rb.linearVelocity.y);
+
+        if (Input.GetKeyDown(KeyCode.W) && IsGrounded())
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpHeight);
+        }
+    }
+
+    public void FireMovement()
+    {
+        float move = 0;
+
+        if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            move = -speed;
+            spriteRenderer.flipX = true;
+        }
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            move = speed;
+            spriteRenderer.flipX = false;
+        }
+
+        rb.linearVelocity = new Vector2(move, rb.linearVelocity.y);
+
+        if (Input.GetKeyDown(KeyCode.UpArrow) && IsGrounded())
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpHeight);
+        }
+    }
+    private bool IsGrounded()
+    {
+        return Physics2D.OverlapCircle(groundCheck.position, 0.01f, groundLayer);
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.tag == "Fire" && playerType == "Water")
+        {
+            SceneManager.LoadScene("SampleScene");
+        }
+
+        if (collision.gameObject.tag == "Water" && playerType == "Fire")
+        {
+            SceneManager.LoadScene("SampleScene");
+        }
+    }
+}
+
