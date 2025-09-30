@@ -3,18 +3,26 @@ using UnityEngine.SceneManagement;
 
 public class PlayerMovement : MonoBehaviour
 {
+    // Fyzikální tělo hráče
     public Rigidbody2D rb;
+    // Rychlost pohybu do stran
     public int speed = 3;
+    // Výška skoku
     public int jumpHeight = 5;
+    // Typ hráče (např. "Fire" nebo "Water")
     public string playerType;
 
+    // Komponenta pro otáčení spritu hráče
     public SpriteRenderer spriteRenderer;
 
+    // Neviditelný objekt, který kontroluje, zda je hráč na zemi
     public Transform groundCheck;
+    // Vrstva, která určuje, co se počítá jako zem
     public LayerMask groundLayer;
 
     void Update()
     {
+        // Podle typu hráče volíme jiný způsob ovládání
         if (playerType == "Fire")
         {
             FireMovement();
@@ -25,67 +33,82 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // Pohyb pro "vodního" dinosaura – ovládání pomocí WASD
     public void WaterMovement()
     {
         float move = 0;
 
+        // Pohyb doleva (A)
         if (Input.GetKey(KeyCode.A))
         {
             move = -speed;
-            spriteRenderer.flipX = true;
+            spriteRenderer.flipX = true; // Otočí sprite doleva
         }
+        // Pohyb doprava (D)
         if (Input.GetKey(KeyCode.D))
         {
             move = speed;
-            spriteRenderer.flipX = false;
+            spriteRenderer.flipX = false; // Otočí sprite doprava
         }
 
+        // Nastavení horizontální rychlosti
         rb.linearVelocity = new Vector2(move, rb.linearVelocity.y);
 
+        // Skok (W) – jen pokud je hráč na zemi
         if (Input.GetKeyDown(KeyCode.W) && IsGrounded())
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpHeight);
         }
     }
 
+    // Pohyb pro "ohnivého" dinosaura – ovládání pomocí šipek
     public void FireMovement()
     {
         float move = 0;
 
+        // Pohyb doleva (←)
         if (Input.GetKey(KeyCode.LeftArrow))
         {
             move = -speed;
-            spriteRenderer.flipX = true;
+            spriteRenderer.flipX = true; // Otočí sprite doleva
         }
+        // Pohyb doprava (→)
         if (Input.GetKey(KeyCode.RightArrow))
         {
             move = speed;
-            spriteRenderer.flipX = false;
+            spriteRenderer.flipX = false; // Otočí sprite doprava
         }
 
+        // Nastavení horizontální rychlosti
         rb.linearVelocity = new Vector2(move, rb.linearVelocity.y);
 
+        // Skok (↑) – jen pokud je hráč na zemi
         if (Input.GetKeyDown(KeyCode.UpArrow) && IsGrounded())
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpHeight);
         }
     }
+
+    // Kontrola, zda je hráč na zemi
     private bool IsGrounded()
     {
+        // Vytvoří malý neviditelný kruh pod hráčem a zkontroluje kolizi s vrstvou "groundLayer"
         return Physics2D.OverlapCircle(groundCheck.position, 0.1f, groundLayer);
     }
 
+    // Kolize se speciálními objekty
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        // Pokud vodní dinosaurus narazí do lávy → restart scény
         if(collision.gameObject.tag == "Fire" && playerType == "Water")
         {
-            SceneManager.LoadScene("SampleScene");
+            SceneManager.LoadScene("SampleScene"); // Načtení scény s daným názvem
         }
 
+        // Pokud ohnivý dinosaurus narazí do vody → restart scény
         if (collision.gameObject.tag == "Water" && playerType == "Fire")
         {
             SceneManager.LoadScene("SampleScene");
         }
     }
 }
-
